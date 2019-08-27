@@ -35,8 +35,9 @@ check_idle()
 
 check_event()
 {
-  if [ $is_idle ]; then
-    current_status="Idle\tIdle" 
+  if [[ $is_idle == true ]]; then
+    current_status="Idle\tIdle"
+    is_idle=false
   else
     current_window_id=`xprop -root 32x '\t$0' _NET_ACTIVE_WINDOW | cut -f 2`
     if [ "$current_window_id" == "0x0" ]; then
