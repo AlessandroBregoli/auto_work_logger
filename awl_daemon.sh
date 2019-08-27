@@ -2,6 +2,7 @@
 # Settigs variables
 awl_folder=~/.awl
 awl_file_log=$awl_folder/awl.log
+awl_file_config=$awl_folder/awl.config
 awl_tmp_file=/tmp/awl_last_window
 max_idle_time=300000
 
@@ -14,6 +15,10 @@ prepare_folders()
 
   if [ ! -f $awl_file_log ]; then
     touch $awl_file_log
+  fi
+
+  if [ -f awl_file_config ]; then
+    . $awl_file_config
   fi
 }
 
