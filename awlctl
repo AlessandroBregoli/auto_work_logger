@@ -1,0 +1,83 @@
+#!/bin/sh
+pidfile=/tmp/awl.pidfile
+
+fn_grouped_from_start()
+{
+    awk '/^start/ { t = $0 "\n"; next } { t = t $0 "\n"; } END { printf "%s", t; }' ~/.awl/awl.log|awk 'NR==1{old = $2; next}{ print $3, $2 - old; old= $2}' | awk '{arr[$1]+=$2}END{for (a in arr) print a, int(arr[a]/3600)":"int(arr[a]/60)%60":"arr[a]%60 }'
+}
+
+fn_grouped_by_type()
+{
+  awk 'NR==1{old = $2; next}{ print $3 "\t" $2 - old; old= $2}' ~/.awl/awl.log | awk '!/^start/ {arr[$1]+=$2}END{for (a in arr) print a, int(arr[a]/3600)":"int(arr[a]/60)%60":"arr[a]%60}'
+}
+
+fn_get_all_time_from_last_start()
+{
+  awk '/^start/ { t = $0 "\n"; next } { t = t $0 "\n"; } END { printf "%s", t; }' ~/.awl/awl.log
+}
+
+fn_stats()
+{
+  if [[ $g == true && $s == true ]]; then
+    fn_grouped_from_start
+  elif [[ $g == true ]]; then
+    fn_grouped_by_type
+  elif [[ $s == true && $a == true ]]; then
+    fn_get_all_time_from_last_start
+  elif [[ $a == true ]]; then
+    cat ~/.awl/awl.log
+  else
+    fn_grouped_from_start
+  fi
+}
+
+cd `dirname $0` 
+
+
+PARSED_OPTIONS=`getopt -n "$0" -o ":gsa" --long "grouped,from_start" -- "$@"`
+eval set -- "$PARSED_OPTIONS"
+
+while true; 
+do
+  case "$1" in
+    -g|--grouped)
+      g=true
+      shift
+      ;;
+    -s|--from_start)
+      s=true
+      shift
+      ;;
+    -a|--all_logs)
+      a=true
+      shift
+      ;;
+    --)
+      shift
+      break;;
+  esac
+done
+
+if [ "$1" == "start" ]; then
+  if [ ! -f $pidfile ]; then
+    ./awl_daemon.sh &
+    echo $! > $pidfile
+    echo "AWL started"
+  else
+    echo "AWL is already running"
+  fi
+elif [ "$1" == "stop" ]; then
+  if [ -f $pidfile ]; then
+    kill `cat $pidfile`
+    echo "AWL stopped"
+    rm $pidfile
+  else
+    echo "No AWL istances found"
+  fi
+elif [ "$1" == "stats" ]; then
+  fn_stats $@
+else
+  echo -e "Available command:\nstart\nstop\nstats"
+fi
+
+

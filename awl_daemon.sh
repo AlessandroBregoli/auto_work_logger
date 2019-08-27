@@ -5,6 +5,7 @@ awl_file_log=$awl_folder/awl.log
 awl_file_config=$awl_folder/awl.config
 awl_tmp_file=/tmp/awl_last_window
 max_idle_time=300000
+awl_update_time=30
 
 # Functions
 prepare_folders()
@@ -19,6 +20,9 @@ prepare_folders()
 
   if [ -f awl_file_config ]; then
     . $awl_file_config
+  fi
+  if [ -f $awl_tmp_file ]; then
+    rm $awl_tmp_file
   fi
 }
 
@@ -47,8 +51,6 @@ check_event()
   
   if [ -f $awl_tmp_file ]; then
     old_status=`cat $awl_tmp_file`
-    echo  "$old_status"
-    echo  "$current_status"
     if [ "$old_status" != "$current_status" ]; then
       echo -e "$current_status" > $awl_tmp_file
       echo -e "stop\t$(date +%s)\t$old_status">>$awl_file_log
@@ -64,6 +66,9 @@ check_event()
 ###
 
 prepare_folders
-check_idle
-check_event
-
+while [ true ]
+do
+  check_idle
+  check_event
+  sleep $awl_update_time
+done
