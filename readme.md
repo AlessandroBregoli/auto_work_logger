@@ -2,5 +2,6 @@
 
 ## Dependences
 
+- xorg
 - xprop
 - xprintidle
