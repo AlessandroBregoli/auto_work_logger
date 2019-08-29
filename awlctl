@@ -1,40 +1,43 @@
 #!/bin/sh
-pidfile=/tmp/awl.pidfile
 
-fn_grouped_from_start()
-{
-    awk '/^start/ { t = $0 "\n"; next } { t = t $0 "\n"; } END { printf "%s", t; }' ~/.awl/awl.log|awk 'NR==1{old = $2; next}{ print $3, $2 - old; old= $2}' | awk '{arr[$1]+=$2}END{for (a in arr) print a, int(arr[a]/3600)":"int(arr[a]/60)%60":"arr[a]%60 }'
-}
+cd `dirname $0` 
+
+. ./utility_and_settings.sh
+
 
 fn_grouped_by_type()
 {
-  awk 'NR==1{old = $2; next}{ print $3 "\t" $2 - old; old= $2}' ~/.awl/awl.log | awk '!/^start/ {arr[$1]+=$2}END{for (a in arr) print a, int(arr[a]/3600)":"int(arr[a]/60)%60":"arr[a]%60}'
+  awk 'NR==1{old = $2; next}{ print $3 "\t" $2 - old; old= $2}' | awk '!/^start/ {arr[$1]+=$2}END{for (a in arr) print a, int(arr[a]/3600)":"int(arr[a]/60)%60":"arr[a]%60}'
 }
 
 fn_get_all_time_from_last_start()
 {
-  awk '/^start/ { t = $0 "\n"; next } { t = t $0 "\n"; } END { printf "%s", t; }' ~/.awl/awl.log
+  awk '/^start/ { t = $0 "\n"; next } { t = t $0 "\n"; } END { printf "%s", t; }'
 }
+
+fn_get_all_time_from_timestamp()
+{
+  awk -v vmt=$1 '$2>=vmt'
+}
+
+
 
 fn_stats()
 {
-  if [[ $g == true && $s == true ]]; then
-    fn_grouped_from_start
-  elif [[ $g == true ]]; then
-    fn_grouped_by_type
-  elif [[ $s == true && $a == true ]]; then
-    fn_get_all_time_from_last_start
-  elif [[ $a == true ]]; then
-    cat ~/.awl/awl.log
-  else
-    fn_grouped_from_start
+  ret=`cat $awl_file_log`
+  if [[ $d == true ]]; then
+    ret=`echo -e "$ret"|fn_get_all_time_from_timestamp $(fn_get_vmidnight_timestamp)`
   fi
+  if [[ $s == true ]]; then
+    ret=`echo -e "$ret"|fn_get_all_time_from_last_start`
+  fi
+  if [[ $g == true ]]; then
+    ret=`echo -e "$ret"|fn_grouped_by_type`
+  fi
+  echo -e "$ret"
 }
 
-cd `dirname $0` 
-
-
-PARSED_OPTIONS=`getopt -n "$0" -o ":gsa" --long "grouped,from_start" -- "$@"`
+PARSED_OPTIONS=`getopt -n "$0" -o ":gsd" --long "grouped,from_start,today" -- "$@"`
 eval set -- "$PARSED_OPTIONS"
 
 while true; 
@@ -48,8 +51,8 @@ do
       s=true
       shift
       ;;
-    -a|--all_logs)
-      a=true
+    -d|--today)
+      d=true
       shift
       ;;
     --)

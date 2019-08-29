@@ -1,13 +1,9 @@
 #!/bin/sh
-# Settigs variables
-awl_folder=~/.awl
-awl_file_log=$awl_folder/awl.log
-awl_file_config=$awl_folder/awl.config
-awl_tmp_file=/tmp/awl_last_window
-max_idle_time=300000
-awl_update_time=30
+
+. ./utility_and_settings.sh
 
 # Functions
+
 prepare_folders()
 {
   if [ ! -d $awl_folder ]; then
@@ -18,9 +14,6 @@ prepare_folders()
     touch $awl_file_log
   fi
 
-  if [ -f awl_file_config ]; then
-    . $awl_file_config
-  fi
   if [ -f $awl_tmp_file ]; then
     rm $awl_tmp_file
   fi
